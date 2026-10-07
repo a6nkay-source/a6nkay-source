@@ -43,7 +43,7 @@
   </tr>
   <tr>
     <td width="50%">
-      <a href="https://github.com/a6nkay-source/Stock-Prediction-Model"><img src="assets/stocks.svg" width="100%" alt="Backtest result: holding every stock equally 16.1% a year, AI portfolio 14.5%, S&amp;P 500 11.0%"></a>
+      <a href="https://github.com/a6nkay-source/Stock-Prediction-Model"><img src="assets/stocks.svg" width="100%" alt="Screenshots of the stock research app: portfolio overview and backtest results"></a>
     </td>
     <td width="50%">
       <h3><a href="https://github.com/a6nkay-source/Stock-Prediction-Model">AI Stock Research Lab</a></h3>

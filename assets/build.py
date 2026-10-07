@@ -299,8 +299,8 @@ CARDS = {
     ),
     "stocks": lambda: crossfade(
         "AI Stock Research Lab", "#f2b248",
-        [("stocks-backtest", "Backtest vs benchmarks"), ("stocks-market", "Market view")],
-        "Screenshots of the stock research app: backtest results and market view",
+        [("stocks-overview", "Portfolio overview"), ("stocks-backtest", "Backtest results")],
+        "Screenshots of the stock research app: portfolio overview and backtest results",
     ),
 }
 
