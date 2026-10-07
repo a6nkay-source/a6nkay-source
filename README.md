@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-  <img src="assets/hero-light.svg" width="100%" alt="Anshuman Kumar. I build and validate machine-learning systems for health, finance and the environment, then test them on data they have never seen.">
+  <img src="assets/hero-light.svg" width="100%" alt="Anshuman Kumar. I build and validate machine-learning systems for health, finance and the environment, then test them on data they have never seen. Interested in biology, business, technology and the future of AI.">
 </picture>
 
 <table>

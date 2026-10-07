@@ -53,6 +53,7 @@ TYPED = [
     "stack: Python · PyTorch · LightGBM · TypeScript · Next.js",
 ]
 LINE_SECONDS = 4.5
+INTERESTS = [("Biology", "violet"), ("Business", "amber"), ("Technology", "blue"), ("Future of AI", "teal")]
 
 
 def ecg(y, width, beat=176):
@@ -68,7 +69,7 @@ def ecg(y, width, beat=176):
 
 
 def hero(t):
-    W, H = 880, 340
+    W, H = 880, 410
     n, total = len(TYPED), len(TYPED) * LINE_SECONDS
     show = 100 / n
     css = f"""
@@ -87,11 +88,13 @@ def hero(t):
     .card{{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}}
     @keyframes pulse{{50%{{opacity:.35}}}}
     .live{{animation:pulse 1.6s ease-in-out infinite}}
+    @keyframes spin{{to{{transform:rotate(360deg)}}}}
+    .ring{{transform-origin:88px 120px;animation:spin 9s linear infinite}}
     @media (prefers-reduced-motion:reduce){{.cover{{display:none}}.ln:first-of-type{{opacity:1}}}}
     """
     b = (
         f'<defs><clipPath id="clip"><rect width="{W}" height="{H}" rx="14"/></clipPath>'
-        f'<clipPath id="term"><rect x="62" y="212" width="388" height="34"/></clipPath>'
+        f'<clipPath id="term"><rect x="62" y="306" width="388" height="34"/></clipPath>'
         f'<pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">'
         f'<circle cx="1" cy="1" r=".8" fill="{t["line"]}"/></pattern>'
         f'<linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="{t["bg"]}"/>'
@@ -99,8 +102,8 @@ def hero(t):
         f'<stop offset="1" stop-color="{t["bg"]}"/></linearGradient></defs>'
         f'<rect width="{W}" height="{H}" rx="14" fill="{t["bg"]}"/>'
         f'<g clip-path="url(#clip)"><rect width="{W}" height="{H}" fill="url(#dots)" opacity=".55"/>'
-        f'<path class="ecg" d="{ecg(312, W)}" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
-        f'stroke-linejoin="round" opacity=".55"/><rect y="262" width="{W}" height="78" fill="url(#fade)"/></g>'
+        f'<path class="ecg" d="{ecg(384, W)}" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
+        f'stroke-linejoin="round" opacity=".55"/><rect y="334" width="{W}" height="76" fill="url(#fade)"/></g>'
         f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="none" stroke="{t["line"]}"/>'
     )
     b += f'<text x="40" y="42" class="mono sp faint" font-size="9">{HANDLE.upper()}</text>'
@@ -109,7 +112,17 @@ def hero(t):
         f'<text x="840" y="42" text-anchor="end" class="mono sp faint" font-size="9">BUILDING · RESEARCHING · 2026</text>'
     )
     b += f'<line x1="40" y1="58" x2="840" y2="58" stroke="{t["line"]}"/>'
-    b += f'<text x="38" y="122" font-size="50" font-weight="700" letter-spacing="-1.5">{NAME}</text>'
+    # portrait
+    b += (
+        f'<defs><clipPath id="face"><circle cx="88" cy="120" r="44"/></clipPath></defs>'
+        f'<image href="{data_uri("portrait")}" x="44" y="76" width="88" height="88" clip-path="url(#face)" '
+        f'preserveAspectRatio="xMidYMid slice"/>'
+        f'<circle cx="88" cy="120" r="44" fill="none" stroke="{t["bg"]}" stroke-width="2"/>'
+        f'<circle class="ring" cx="88" cy="120" r="48.5" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
+        f'stroke-dasharray="210 95" stroke-linecap="round"/>'
+    )
+    b += f'<text x="152" y="118" font-size="40" font-weight="700" letter-spacing="-1.2">{NAME}</text>'
+    b += f'<text x="154" y="142" font-size="13" class="mute">Machine learning · research · product</text>'
     for i, l in enumerate(
         [
             "I build and validate machine-learning systems for",
@@ -117,30 +130,36 @@ def hero(t):
             "them on data they have never seen.",
         ]
     ):
-        b += f'<text x="40" y="{154 + i * 21}" font-size="15" class="mute">{l}</text>'
+        b += f'<text x="40" y="{200 + i * 21}" font-size="15" class="mute">{l}</text>'
 
     # terminal strip
     b += (
-        f'<rect x="40" y="212" width="420" height="34" rx="7" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
-        f'<text x="52" y="234" class="mono" font-size="12" font-weight="700" style="fill:{t["teal"]}">›</text>'
+        f'<rect x="40" y="306" width="420" height="34" rx="7" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
+        f'<text x="52" y="328" class="mono" font-size="12" font-weight="700" style="fill:{t["teal"]}">›</text>'
         f'<g clip-path="url(#term)">'
     )
     for i, line in enumerate(TYPED):
         b += (
-            f'<text class="ln mono" style="animation-delay:{i * LINE_SECONDS}s" x="66" y="234" '
+            f'<text class="ln mono" style="animation-delay:{i * LINE_SECONDS}s" x="66" y="328" '
             f'font-size="11">{line}</text>'
         )
     b += (
-        f'<g class="cover"><rect x="64" y="214" width="420" height="30" fill="{t["bg2"]}"/>'
-        f'<rect class="caret" x="65" y="222" width="6.5" height="14" fill="{t["teal"]}"/></g></g>'
+        f'<g class="cover"><rect x="64" y="308" width="420" height="30" fill="{t["bg2"]}"/>'
+        f'<rect class="caret" x="65" y="316" width="6.5" height="14" fill="{t["teal"]}"/></g></g>'
     )
 
-    x = 40
-    for k, (name, c) in enumerate(
-        [("MED-TECH", "violet"), ("RESEARCH", "teal"), ("BUSINESS", "amber"), ("ENGINEERING", "blue")], 1
-    ):
-        b += f'<text x="{x}" y="268" class="mono sp" font-size="9" style="fill:{t[c]}">0{k} {name}</text>'
-        x += 28 + len(name) * 7.4 + 18
+    # interests
+    b += f'<text x="40" y="285" class="mono sp faint" font-size="9">INTERESTED IN</text>'
+    x = 142
+    for name, c in INTERESTS:
+        w = 22 + len(name) * 6.3
+        b += (
+            f'<rect x="{x}" y="269" width="{w:.0f}" height="24" rx="12" fill="{t[c]}" fill-opacity=".12" '
+            f'stroke="{t[c]}" stroke-opacity=".55"/>'
+            f'<text x="{x + w / 2:.0f}" y="285" text-anchor="middle" font-size="11.5" font-weight="600" '
+            f'style="fill:{t[c]}">{name}</text>'
+        )
+        x += w + 7
 
     cards = [
         ("01 · MED-TECH", "Parkinson's Voice AI", "4 cohorts · 366 subjects", "violet"),
@@ -149,7 +168,7 @@ def hero(t):
         ("04 · ENVIRONMENT", "Hydrosense", "359 USGS river stations", "teal"),
     ]
     for i, (k, title, sub, c) in enumerate(cards):
-        cx, cy = 492 + (i % 2) * 178, 78 + (i // 2) * 96
+        cx, cy = 492 + (i % 2) * 178, 82 + (i // 2) * 96
         b += (
             f'<g class="card" style="animation-delay:{.15 + i * .12:.2f}s">'
             f'<rect x="{cx}" y="{cy}" width="168" height="86" rx="9" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
