@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-  <img src="assets/hero-light.svg" width="100%" alt="Anshuman Kumar. I build and validate machine-learning systems for health, finance and the environment, then test them on data they have never seen. Interested in biology, business, technology and the future of AI.">
-</picture>
+<img src="assets/hero.svg" width="100%" alt="Anshuman Kumar. I build and validate machine-learning systems for health, finance and the environment, then test them on data they have never seen. Interested in biology, business, technology and the future of AI.">
 
 <table>
   <tr>
@@ -84,10 +81,7 @@
 </table>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://streak-stats.demolab.com?user=a6nkay-source&hide_border=true&background=00000000&ring=3fd0c0&fire=f2b248&currStreakNum=e8edf4&sideNums=e8edf4&currStreakLabel=3fd0c0&sideLabels=8b98a9&dates=556275&stroke=243042">
-    <img src="https://streak-stats.demolab.com?user=a6nkay-source&hide_border=true&background=00000000&ring=0e8f84&fire=b27408&currStreakNum=1a1f29&sideNums=1a1f29&currStreakLabel=0e8f84&sideLabels=5e6673&dates=9aa0a8&stroke=e2ddd0" alt="GitHub contribution streak" width="62%">
-  </picture>
+  <img src="https://streak-stats.demolab.com?user=a6nkay-source&border_radius=12&border=e2ddd0&background=f6f4ee&ring=0e8f84&fire=b27408&currStreakNum=1a1f29&sideNums=1a1f29&currStreakLabel=0e8f84&sideLabels=5e6673&dates=9aa0a8&stroke=e2ddd0" alt="GitHub contribution streak" width="62%">
 </p>
 
 <p align="center">

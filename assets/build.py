@@ -16,6 +16,7 @@ SHOTS = OUT / "shots"
 
 NAME = "Anshuman Kumar"
 HANDLE = "a6nkay-source"
+HERO_THEME = "light"
 
 SANS = "-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
 MONO = "ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,monospace"
@@ -312,9 +313,9 @@ CARDS = {
 
 if __name__ == "__main__":
     written = 0
-    for theme, t in THEMES.items():
-        (OUT / f"hero-{theme}.svg").write_text(hero(t))
-        written += 1
+    # One fixed look for every visitor: the banner does not follow the viewer's light/dark setting.
+    (OUT / "hero.svg").write_text(hero(THEMES[HERO_THEME]))
+    written += 1
     for name, make in CARDS.items():
         try:
             (OUT / f"{name}.svg").write_text(make())
