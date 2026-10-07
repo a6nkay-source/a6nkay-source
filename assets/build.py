@@ -69,7 +69,9 @@ def ecg(y, width, beat=176):
 
 
 def hero(t):
-    W, H = 880, 410
+    W, H = 880, 468
+    PX, PY, PR = 150, 196, 82  # portrait centre and radius
+    TX = 296  # left edge of the text column
     n, total = len(TYPED), len(TYPED) * LINE_SECONDS
     show = 100 / n
     css = f"""
@@ -78,32 +80,42 @@ def hero(t):
     .mute{{fill:{t['mute']}}} .faint{{fill:{t['faint']}}}
     @keyframes drift{{to{{transform:translateX(-176px)}}}}
     .ecg{{animation:drift 3.2s linear infinite}}
-    @keyframes type{{0%{{transform:translateX(0)}}55%,100%{{transform:translateX(404px)}}}}
-    .cover{{animation:type {LINE_SECONDS}s steps(52,end) infinite}}
+    @keyframes type{{0%{{transform:translateX(0)}}55%,100%{{transform:translateX(424px)}}}}
+    .cover{{animation:type {LINE_SECONDS}s steps(54,end) infinite}}
     @keyframes blink{{50%{{opacity:0}}}}
     .caret{{animation:blink .9s steps(1) infinite}}
     @keyframes show{{0%,{show - .1:.2f}%{{opacity:1}}{show:.2f}%,100%{{opacity:0}}}}
     .ln{{opacity:0;animation:show {total}s linear infinite}}
-    @keyframes rise{{from{{opacity:0;transform:translateY(10px)}}}}
-    .card{{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}}
     @keyframes pulse{{50%{{opacity:.35}}}}
     .live{{animation:pulse 1.6s ease-in-out infinite}}
+    .o{{transform-origin:{PX}px {PY}px}}
     @keyframes spin{{to{{transform:rotate(360deg)}}}}
-    .ring{{transform-origin:88px 120px;animation:spin 9s linear infinite}}
-    @media (prefers-reduced-motion:reduce){{.cover{{display:none}}.ln:first-of-type{{opacity:1}}}}
+    .cw{{animation:spin 14s linear infinite}}
+    .ccw{{animation:spin 30s linear infinite reverse}}
+    .orbit{{animation:spin 11s linear infinite}}
+    @keyframes ping{{0%{{transform:scale(1);opacity:.55}}70%,100%{{transform:scale(1.42);opacity:0}}}}
+    .ping{{animation:ping 3.6s ease-out infinite}}
+    @keyframes glow{{50%{{opacity:.9;transform:scale(1.06)}}}}
+    .glow{{opacity:.55;animation:glow 5s ease-in-out infinite}}
+    @media (prefers-reduced-motion:reduce){{.cover{{display:none}}.ln:first-of-type{{opacity:1}}.ping{{opacity:0}}}}
     """
     b = (
         f'<defs><clipPath id="clip"><rect width="{W}" height="{H}" rx="14"/></clipPath>'
-        f'<clipPath id="term"><rect x="62" y="306" width="388" height="34"/></clipPath>'
+        f'<clipPath id="term"><rect x="{TX + 22}" y="272" width="412" height="34"/></clipPath>'
+        f'<clipPath id="face"><circle cx="{PX}" cy="{PY}" r="{PR}"/></clipPath>'
         f'<pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">'
         f'<circle cx="1" cy="1" r=".8" fill="{t["line"]}"/></pattern>'
+        f'<radialGradient id="halo"><stop offset=".55" stop-color="{t["teal"]}" stop-opacity=".32"/>'
+        f'<stop offset="1" stop-color="{t["teal"]}" stop-opacity="0"/></radialGradient>'
+        f'<linearGradient id="arc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{t["teal"]}"/>'
+        f'<stop offset=".5" stop-color="{t["blue"]}"/><stop offset="1" stop-color="{t["violet"]}"/></linearGradient>'
         f'<linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="{t["bg"]}"/>'
         f'<stop offset=".12" stop-color="{t["bg"]}" stop-opacity="0"/><stop offset=".88" stop-color="{t["bg"]}" stop-opacity="0"/>'
         f'<stop offset="1" stop-color="{t["bg"]}"/></linearGradient></defs>'
         f'<rect width="{W}" height="{H}" rx="14" fill="{t["bg"]}"/>'
         f'<g clip-path="url(#clip)"><rect width="{W}" height="{H}" fill="url(#dots)" opacity=".55"/>'
-        f'<path class="ecg" d="{ecg(384, W)}" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
-        f'stroke-linejoin="round" opacity=".55"/><rect y="334" width="{W}" height="76" fill="url(#fade)"/></g>'
+        f'<path class="ecg" d="{ecg(444, W)}" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
+        f'stroke-linejoin="round" opacity=".5"/><rect y="396" width="{W}" height="72" fill="url(#fade)"/></g>'
         f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="none" stroke="{t["line"]}"/>'
     )
     b += f'<text x="40" y="42" class="mono sp faint" font-size="9">{HANDLE.upper()}</text>'
@@ -112,54 +124,67 @@ def hero(t):
         f'<text x="840" y="42" text-anchor="end" class="mono sp faint" font-size="9">BUILDING · RESEARCHING · 2026</text>'
     )
     b += f'<line x1="40" y1="58" x2="840" y2="58" stroke="{t["line"]}"/>'
-    # portrait
+
+    # portrait: halo, sonar ping, two counter-rotating rings and three orbiting dots
     b += (
-        f'<defs><clipPath id="face"><circle cx="88" cy="120" r="44"/></clipPath></defs>'
-        f'<image href="{data_uri("portrait")}" x="44" y="76" width="88" height="88" clip-path="url(#face)" '
-        f'preserveAspectRatio="xMidYMid slice"/>'
-        f'<circle cx="88" cy="120" r="44" fill="none" stroke="{t["bg"]}" stroke-width="2"/>'
-        f'<circle class="ring" cx="88" cy="120" r="48.5" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
-        f'stroke-dasharray="210 95" stroke-linecap="round"/>'
+        f'<circle class="o glow" cx="{PX}" cy="{PY}" r="{PR + 40}" fill="url(#halo)"/>'
+        f'<circle class="o ping" cx="{PX}" cy="{PY}" r="{PR + 2}" fill="none" stroke="{t["teal"]}" stroke-width="1.5"/>'
+        f'<circle class="o ping" style="animation-delay:-1.8s" cx="{PX}" cy="{PY}" r="{PR + 2}" fill="none" '
+        f'stroke="{t["violet"]}" stroke-width="1.5"/>'
+        f'<circle class="o ccw" cx="{PX}" cy="{PY}" r="{PR + 22}" fill="none" stroke="{t["faint"]}" stroke-width="1" '
+        f'stroke-dasharray="2 9" stroke-linecap="round"/>'
+        f'<image href="{data_uri("portrait")}" x="{PX - PR}" y="{PY - PR}" width="{PR * 2}" height="{PR * 2}" '
+        f'clip-path="url(#face)" preserveAspectRatio="xMidYMid slice"/>'
+        f'<circle cx="{PX}" cy="{PY}" r="{PR}" fill="none" stroke="{t["bg"]}" stroke-width="3"/>'
+        f'<circle class="o cw" cx="{PX}" cy="{PY}" r="{PR + 8}" fill="none" stroke="url(#arc)" stroke-width="3" '
+        f'stroke-dasharray="{(PR + 8) * 3.9:.0f} {(PR + 8) * 2.4:.0f}" stroke-linecap="round"/>'
     )
-    b += f'<text x="152" y="118" font-size="40" font-weight="700" letter-spacing="-1.2">{NAME}</text>'
-    b += f'<text x="154" y="142" font-size="13" class="mute">Machine learning · research · product</text>'
+    for i, (c, r, dur) in enumerate([("violet", 5, 11), ("amber", 4, 17), ("blue", 3.5, 23)]):
+        b += (
+            f'<g class="o orbit" style="animation-duration:{dur}s;animation-delay:-{i * 4}s">'
+            f'<circle cx="{PX}" cy="{PY - PR - 22}" r="{r}" fill="{t[c]}"/>'
+            f'<circle cx="{PX}" cy="{PY - PR - 22}" r="{r + 4}" fill="{t[c]}" opacity=".22"/></g>'
+        )
+
+    b += f'<text x="{TX - 2}" y="124" font-size="48" font-weight="700" letter-spacing="-1.5">{NAME}</text>'
+    b += f'<text x="{TX}" y="150" font-size="14" class="mute">Machine learning · research · product</text>'
     for i, l in enumerate(
         [
-            "I build and validate machine-learning systems for",
-            f'<tspan font-weight="700" style="fill:{t["ink"]}">health, finance and the environment</tspan>, then test',
-            "them on data they have never seen.",
+            "I build and validate machine-learning systems for "
+            f'<tspan font-weight="700" style="fill:{t["ink"]}">health, finance</tspan>',
+            f'<tspan font-weight="700" style="fill:{t["ink"]}">and the environment</tspan>, then test them on data they have never seen.',
         ]
     ):
-        b += f'<text x="40" y="{200 + i * 21}" font-size="15" class="mute">{l}</text>'
+        b += f'<text x="{TX}" y="{186 + i * 22}" font-size="15" class="mute">{l}</text>'
+
+    # interests
+    b += f'<text x="{TX}" y="251" class="mono sp faint" font-size="9">INTERESTED IN</text>'
+    x = TX + 104
+    for name, c in INTERESTS:
+        w = 24 + len(name) * 6.6
+        b += (
+            f'<rect x="{x}" y="234" width="{w:.0f}" height="26" rx="13" fill="{t[c]}" fill-opacity=".12" '
+            f'stroke="{t[c]}" stroke-opacity=".55"/>'
+            f'<text x="{x + w / 2:.0f}" y="251.5" text-anchor="middle" font-size="12" font-weight="600" '
+            f'style="fill:{t[c]}">{name}</text>'
+        )
+        x += w + 8
 
     # terminal strip
     b += (
-        f'<rect x="40" y="306" width="420" height="34" rx="7" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
-        f'<text x="52" y="328" class="mono" font-size="12" font-weight="700" style="fill:{t["teal"]}">›</text>'
+        f'<rect x="{TX}" y="272" width="444" height="34" rx="7" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
+        f'<text x="{TX + 12}" y="294" class="mono" font-size="12" font-weight="700" style="fill:{t["teal"]}">›</text>'
         f'<g clip-path="url(#term)">'
     )
     for i, line in enumerate(TYPED):
         b += (
-            f'<text class="ln mono" style="animation-delay:{i * LINE_SECONDS}s" x="66" y="328" '
-            f'font-size="11">{line}</text>'
+            f'<text class="ln mono" style="animation-delay:{i * LINE_SECONDS}s" x="{TX + 26}" y="294" '
+            f'font-size="11.5">{line}</text>'
         )
     b += (
-        f'<g class="cover"><rect x="64" y="308" width="420" height="30" fill="{t["bg2"]}"/>'
-        f'<rect class="caret" x="65" y="316" width="6.5" height="14" fill="{t["teal"]}"/></g></g>'
+        f'<g class="cover"><rect x="{TX + 24}" y="274" width="440" height="30" fill="{t["bg2"]}"/>'
+        f'<rect class="caret" x="{TX + 25}" y="282" width="6.5" height="14" fill="{t["teal"]}"/></g></g>'
     )
-
-    # interests
-    b += f'<text x="40" y="285" class="mono sp faint" font-size="9">INTERESTED IN</text>'
-    x = 142
-    for name, c in INTERESTS:
-        w = 22 + len(name) * 6.3
-        b += (
-            f'<rect x="{x}" y="269" width="{w:.0f}" height="24" rx="12" fill="{t[c]}" fill-opacity=".12" '
-            f'stroke="{t[c]}" stroke-opacity=".55"/>'
-            f'<text x="{x + w / 2:.0f}" y="285" text-anchor="middle" font-size="11.5" font-weight="600" '
-            f'style="fill:{t[c]}">{name}</text>'
-        )
-        x += w + 7
 
     cards = [
         ("01 · MED-TECH", "Parkinson's Voice AI", "4 cohorts · 366 subjects", "violet"),
@@ -168,14 +193,14 @@ def hero(t):
         ("04 · ENVIRONMENT", "Hydrosense", "359 USGS river stations", "teal"),
     ]
     for i, (k, title, sub, c) in enumerate(cards):
-        cx, cy = 492 + (i % 2) * 178, 82 + (i // 2) * 96
+        cx, cy = 40 + i * 203, 330
         b += (
-            f'<g class="card" style="animation-delay:{.15 + i * .12:.2f}s">'
-            f'<rect x="{cx}" y="{cy}" width="168" height="86" rx="9" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
-            f'<rect x="{cx}" y="{cy + 14}" width="2.5" height="22" rx="1" fill="{t[c]}"/>'
-            f'<text x="{cx + 14}" y="{cy + 24}" class="mono sp" font-size="8" style="fill:{t[c]}">{k}</text>'
-            f'<text x="{cx + 14}" y="{cy + 50}" font-size="15" font-weight="650">{title}</text>'
-            f'<text x="{cx + 14}" y="{cy + 68}" font-size="10" class="mute">{sub}</text></g>'
+            '<g>'
+            f'<rect x="{cx}" y="{cy}" width="191" height="72" rx="9" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
+            f'<rect x="{cx}" y="{cy + 12}" width="2.5" height="20" rx="1" fill="{t[c]}"/>'
+            f'<text x="{cx + 14}" y="{cy + 21}" class="mono sp" font-size="8" style="fill:{t[c]}">{k}</text>'
+            f'<text x="{cx + 14}" y="{cy + 42}" font-size="14.5" font-weight="650">{title}</text>'
+            f'<text x="{cx + 14}" y="{cy + 59}" font-size="10" class="mute">{sub}</text></g>'
         )
     return svg(W, H, b, css, f"{NAME}: machine learning for health, finance and the environment")
 
