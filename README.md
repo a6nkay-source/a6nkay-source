@@ -7,7 +7,7 @@
   <tr>
     <td width="33%" valign="top">
       <h4>Med-tech research</h4>
-      <p>Voice-biomarker models for Parkinson's disease, validated across independent patient cohorts with calibration, domain-shift and leakage analysis. On-device wellness and burnout signals in Anchor.</p>
+      <p>Voice-biomarker models for Parkinson's disease, validated across independent patient cohorts with calibration, domain-shift and leakage analysis. Surgical video segmentation in SurgiVision and on-device wellness signals in Anchor.</p>
     </td>
     <td width="33%" valign="top">
       <h4>Business and finance</h4>
@@ -21,6 +21,16 @@
 </table>
 
 <table>
+  <tr>
+    <td width="50%">
+      <h3>SurgiVision</h3>
+      <p><b>A surgical-vision research lab for gallbladder surgery.</b> Built with <a href="https://github.com/virajrungta">Viraj Rungta</a>. It segments laparoscopic video pixel by pixel, tracks anatomy and instruments from frame to frame, runs an open-source pre-op risk model, and has a simulated smart-glasses voice that reads out what the model sees. Every output is labelled real model, demo or not evaluated. A research prototype, not for clinical use.</p>
+      <p><code>Python</code> · <code>FastAPI</code> · <code>OpenCV</code> · <code>React</code> · private repo</p>
+    </td>
+    <td width="50%">
+      <img src="assets/surgivision.svg" width="100%" alt="Screenshots of SurgiVision: live segmentation of a synthetic laparoscopic clip, and the research workspace">
+    </td>
+  </tr>
   <tr>
     <td width="50%">
       <a href="https://github.com/a6nkay-source/Parkinson-Model-Detection"><img src="assets/parkinson.svg" width="100%" alt="Research figure from the repo: cross-cohort ROC-AUC, reliability and biomarker stability"></a>

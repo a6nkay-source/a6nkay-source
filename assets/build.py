@@ -49,6 +49,7 @@ def data_uri(name):
 # Lines the terminal strip types out, one after another.
 TYPED = [
     "med-tech: Parkinson's voice AI, 4 cohorts, 366 subjects",
+    "med-tech: SurgiVision, surgical video segmentation",
     "business: 74 stocks, 20-year walk-forward backtests",
     "stack: Python · PyTorch · LightGBM · TypeScript · Next.js",
 ]
@@ -283,6 +284,11 @@ def pan(title, accent, shot, width, caption, label, seconds=22):
 
 
 CARDS = {
+    "surgivision": lambda: crossfade(
+        "SurgiVision · surgical vision research", "#f87171",
+        [("surgivision-pov", "Live segmentation on the demo clip"), ("surgivision-research", "Research workspace")],
+        "Screenshots of SurgiVision: live segmentation of a synthetic laparoscopic clip, and the research workspace",
+    ),
     "parkinson": lambda: pan(
         "Parkinson's voice model · cross-cohort results", "#a48bff", "parkinson-figure", 1453,
         "figure from the repo", "Research figure: cross-cohort ROC-AUC, reliability and biomarker stability",
