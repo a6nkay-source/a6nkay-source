@@ -2,15 +2,17 @@
 """Regenerates the profile README artwork.
 
 GitHub strips CSS and scripts from READMEs, so every styled piece is an SVG
-loaded through <img>. Each one is emitted in a dark and a light variant and
-the README picks between them with <picture>.
+loaded through <img>. The project cards wrap real captures from each project
+(assets/shots/*.jpg) in an animated window frame; the images are inlined as
+base64 because an SVG shown through <img> cannot load external files.
 
     python3 assets/build.py
 """
-import math
+import base64
 from pathlib import Path
 
 OUT = Path(__file__).parent
+SHOTS = OUT / "shots"
 
 NAME = "Anshuman Kumar"
 HANDLE = "a6nkay-source"
@@ -30,260 +32,243 @@ THEMES = {
 }
 
 
-def svg(w, h, body, t, label, extra_css=""):
-    css = f"""
-    text{{font-family:{SANS};fill:{t['ink']}}}
-    .mono{{font-family:{MONO};letter-spacing:.14em}}
-    .mute{{fill:{t['mute']}}} .faint{{fill:{t['faint']}}}
-    @keyframes drift{{to{{transform:translateX(-120px)}}}}
-    .drift{{animation:drift 9s linear infinite}}
-    .drift.slow{{animation-duration:15s}}
-    {extra_css}
-    @media (prefers-reduced-motion:reduce){{*{{animation:none!important}}}}
-    """
+def svg(w, h, body, css, label):
+    css += "@media (prefers-reduced-motion:reduce){*{animation:none!important}}"
     return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w} {h}" width="{w}" height="{h}" '
-        f'role="img" aria-label="{label}"><style>{css}</style>{body}</svg>\n'
+        f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+        f'viewBox="0 0 {w} {h}" width="{w}" height="{h}" role="img" aria-label="{label}">'
+        f"<style>{css}</style>{body}</svg>\n"
     )
 
 
-def wave(y, amp, width, period=120):
-    """A sine-ish path one period wider than `width`, so it can drift left and loop."""
-    d = f"M0,{y} Q{period / 4},{y - amp} {period / 2},{y}"
-    x = period / 2
-    while x < width + period:
-        x += period / 2
-        d += f" T{x},{y}"
-    return d
-
-
-def frame(w, h, t, rx=12):
-    return (
-        f'<defs><clipPath id="clip"><rect width="{w}" height="{h}" rx="{rx}"/></clipPath>'
-        f'<pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">'
-        f'<circle cx="1" cy="1" r=".8" fill="{t["line"]}"/></pattern></defs>'
-        f'<rect width="{w}" height="{h}" rx="{rx}" fill="{t["bg"]}"/>'
-        f'<rect x=".5" y=".5" width="{w - 1}" height="{h - 1}" rx="{rx}" fill="none" stroke="{t["line"]}"/>'
-    )
-
-
-def tag(x, y, text, color, size=9):
-    return f'<text x="{x}" y="{y}" class="mono" font-size="{size}" fill="{color}" style="fill:{color}">{text}</text>'
+def data_uri(name):
+    return "data:image/jpeg;base64," + base64.b64encode((SHOTS / f"{name}.jpg").read_bytes()).decode()
 
 
 # ── hero ──────────────────────────────────────────────────────────────────────
+# Lines the terminal strip types out, one after another.
+TYPED = [
+    "med-tech: Parkinson's voice AI, 4 cohorts, 366 subjects",
+    "business: 74 stocks, 20-year walk-forward backtests",
+    "stack: Python · PyTorch · LightGBM · TypeScript · Next.js",
+]
+LINE_SECONDS = 4.5
+
+
+def ecg(y, width, beat=176):
+    """A heartbeat trace one beat wider than `width`, so it can drift left and loop."""
+    d, x = f"M0,{y}", 0
+    while x < width + beat:
+        d += (
+            f" H{x + 58} l7,-5 l7,5 h10 l5,5 l8,-34 l8,44 l6,-15 h14"
+            f" q10,-13 20,0"
+        )
+        x += beat
+    return d + f" H{x}"
+
+
 def hero(t):
-    W, H = 880, 300
-    b = frame(W, H, t, 14)
-    b += f'<g clip-path="url(#clip)"><rect width="{W}" height="{H}" fill="url(#dots)" opacity=".55"/>'
-    b += (
-        f'<path class="drift slow" d="{wave(268, 9, W)}" fill="none" stroke="{t["teal"]}" stroke-width="1.5" opacity=".35"/>'
-        f'<path class="drift" d="{wave(280, 6, W)}" fill="none" stroke="{t["blue"]}" stroke-width="1.5" opacity=".3"/></g>'
+    W, H = 880, 340
+    n, total = len(TYPED), len(TYPED) * LINE_SECONDS
+    show = 100 / n
+    css = f"""
+    text{{font-family:{SANS};fill:{t['ink']}}}
+    .mono{{font-family:{MONO}}} .sp{{letter-spacing:.14em}}
+    .mute{{fill:{t['mute']}}} .faint{{fill:{t['faint']}}}
+    @keyframes drift{{to{{transform:translateX(-176px)}}}}
+    .ecg{{animation:drift 3.2s linear infinite}}
+    @keyframes type{{0%{{transform:translateX(0)}}55%,100%{{transform:translateX(404px)}}}}
+    .cover{{animation:type {LINE_SECONDS}s steps(52,end) infinite}}
+    @keyframes blink{{50%{{opacity:0}}}}
+    .caret{{animation:blink .9s steps(1) infinite}}
+    @keyframes show{{0%,{show - .1:.2f}%{{opacity:1}}{show:.2f}%,100%{{opacity:0}}}}
+    .ln{{opacity:0;animation:show {total}s linear infinite}}
+    @keyframes rise{{from{{opacity:0;transform:translateY(10px)}}}}
+    .card{{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}}
+    @keyframes pulse{{50%{{opacity:.35}}}}
+    .live{{animation:pulse 1.6s ease-in-out infinite}}
+    @media (prefers-reduced-motion:reduce){{.cover{{display:none}}.ln:first-of-type{{opacity:1}}}}
+    """
+    b = (
+        f'<defs><clipPath id="clip"><rect width="{W}" height="{H}" rx="14"/></clipPath>'
+        f'<clipPath id="term"><rect x="62" y="212" width="388" height="34"/></clipPath>'
+        f'<pattern id="dots" width="16" height="16" patternUnits="userSpaceOnUse">'
+        f'<circle cx="1" cy="1" r=".8" fill="{t["line"]}"/></pattern>'
+        f'<linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="{t["bg"]}"/>'
+        f'<stop offset=".12" stop-color="{t["bg"]}" stop-opacity="0"/><stop offset=".88" stop-color="{t["bg"]}" stop-opacity="0"/>'
+        f'<stop offset="1" stop-color="{t["bg"]}"/></linearGradient></defs>'
+        f'<rect width="{W}" height="{H}" rx="14" fill="{t["bg"]}"/>'
+        f'<g clip-path="url(#clip)"><rect width="{W}" height="{H}" fill="url(#dots)" opacity=".55"/>'
+        f'<path class="ecg" d="{ecg(312, W)}" fill="none" stroke="{t["teal"]}" stroke-width="1.6" '
+        f'stroke-linejoin="round" opacity=".55"/><rect y="262" width="{W}" height="78" fill="url(#fade)"/></g>'
+        f'<rect x=".5" y=".5" width="{W - 1}" height="{H - 1}" rx="14" fill="none" stroke="{t["line"]}"/>'
     )
-    b += tag(40, 42, HANDLE.upper(), t["faint"])
-    b += f'<text x="840" y="42" text-anchor="end" class="mono faint" font-size="9">SELECTED WORK · 2026</text>'
+    b += f'<text x="40" y="42" class="mono sp faint" font-size="9">{HANDLE.upper()}</text>'
+    b += (
+        f'<circle class="live" cx="641" cy="39" r="3" fill="{t["teal"]}"/>'
+        f'<text x="840" y="42" text-anchor="end" class="mono sp faint" font-size="9">BUILDING · RESEARCHING · 2026</text>'
+    )
     b += f'<line x1="40" y1="58" x2="840" y2="58" stroke="{t["line"]}"/>'
-    b += f'<text x="38" y="128" font-size="50" font-weight="700" letter-spacing="-1.5">{NAME}</text>'
-    lines = [
-        "I train models, then check whether they",
-        f'<tspan font-weight="700">actually work</tspan> — on rivers, voices and',
-        "markets. Sometimes I just make a game.",
-    ]
-    for i, l in enumerate(lines):
-        b += f'<text x="40" y="{164 + i * 22}" font-size="15.5" class="mute">{l}</text>'
-    x = 40
-    for n, (name, c) in enumerate(
-        [("WATER", "teal"), ("HEALTH", "violet"), ("MARKETS", "amber"), ("LEARNING", "blue"), ("GAMES", "pink")], 1
+    b += f'<text x="38" y="122" font-size="50" font-weight="700" letter-spacing="-1.5">{NAME}</text>'
+    for i, l in enumerate(
+        [
+            "I build and validate machine-learning systems for",
+            f'<tspan font-weight="700" style="fill:{t["ink"]}">health, finance and the environment</tspan>, then test',
+            "them on data they have never seen.",
+        ]
     ):
-        b += tag(x, 248, f"0{n} {name}", t[c])
+        b += f'<text x="40" y="{154 + i * 21}" font-size="15" class="mute">{l}</text>'
+
+    # terminal strip
+    b += (
+        f'<rect x="40" y="212" width="420" height="34" rx="7" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
+        f'<text x="52" y="234" class="mono" font-size="12" font-weight="700" style="fill:{t["teal"]}">›</text>'
+        f'<g clip-path="url(#term)">'
+    )
+    for i, line in enumerate(TYPED):
+        b += (
+            f'<text class="ln mono" style="animation-delay:{i * LINE_SECONDS}s" x="66" y="234" '
+            f'font-size="11">{line}</text>'
+        )
+    b += (
+        f'<g class="cover"><rect x="64" y="214" width="420" height="30" fill="{t["bg2"]}"/>'
+        f'<rect class="caret" x="65" y="222" width="6.5" height="14" fill="{t["teal"]}"/></g></g>'
+    )
+
+    x = 40
+    for k, (name, c) in enumerate(
+        [("MED-TECH", "violet"), ("RESEARCH", "teal"), ("BUSINESS", "amber"), ("ENGINEERING", "blue")], 1
+    ):
+        b += f'<text x="{x}" y="268" class="mono sp" font-size="9" style="fill:{t[c]}">0{k} {name}</text>'
         x += 28 + len(name) * 7.4 + 18
+
     cards = [
-        ("01 · RESEARCH", "Hydrosense", "Nitrate forecasts for US rivers", "teal"),
-        ("02 · RESEARCH", "PD Voice Model", "Tested on unseen cohorts", "violet"),
-        ("03 · WEB", "Stock Research Lab", "74 stocks, honest backtests", "amber"),
-        ("04 · WEB", "Anchor", "A study space that checks in", "blue"),
+        ("01 · MED-TECH", "Parkinson's Voice AI", "4 cohorts · 366 subjects", "violet"),
+        ("02 · HEALTH", "Anchor", "Wellness signals, on-device", "blue"),
+        ("03 · BUSINESS", "Stock Research Lab", "74 stocks · 20-year backtest", "amber"),
+        ("04 · ENVIRONMENT", "Hydrosense", "359 USGS river stations", "teal"),
     ]
     for i, (k, title, sub, c) in enumerate(cards):
         cx, cy = 492 + (i % 2) * 178, 78 + (i // 2) * 96
         b += (
+            f'<g class="card" style="animation-delay:{.15 + i * .12:.2f}s">'
             f'<rect x="{cx}" y="{cy}" width="168" height="86" rx="9" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
             f'<rect x="{cx}" y="{cy + 14}" width="2.5" height="22" rx="1" fill="{t[c]}"/>'
-            + tag(cx + 14, cy + 24, k, t[c], 8)
-            + f'<text x="{cx + 14}" y="{cy + 50}" font-size="15" font-weight="650">{title}</text>'
-            f'<text x="{cx + 14}" y="{cy + 68}" font-size="10" class="mute">{sub}</text>'
+            f'<text x="{cx + 14}" y="{cy + 24}" class="mono sp" font-size="8" style="fill:{t[c]}">{k}</text>'
+            f'<text x="{cx + 14}" y="{cy + 50}" font-size="15" font-weight="650">{title}</text>'
+            f'<text x="{cx + 14}" y="{cy + 68}" font-size="10" class="mute">{sub}</text></g>'
         )
-    return svg(W, H, b, t, f"{NAME}: selected work")
+    return svg(W, H, b, css, f"{NAME}: machine learning for health, finance and the environment")
 
 
-# ── project art (440×264) ─────────────────────────────────────────────────────
-AW, AH = 440, 264
+# ── project cards: real captures in an animated window ────────────────────────
+CW, CH, BAR = 880, 600, 40
+VIEW = CH - BAR  # 560: the captures are 880×560
+WIN = dict(bg="#0d1117", bar="#161b22", line="#30363d", ink="#c9d1d9", mute="#7d8590")
 
 
-def art_hydrosense(t):
-    c = t["teal"]
-    b = frame(AW, AH, t) + tag(24, 32, "01 RESEARCH · WATER QUALITY", t["faint"])
-    f = lambda x: 142 - 26 * math.sin(x / 38) - 9 * math.sin(x / 11 + 1)
-    obs = " ".join(f"{x},{f(x):.1f}" for x in range(30, 251, 5))
-    fc = [(x, f(x) - (x - 250) * 0.12) for x in range(250, 411, 5)]
-    spread = lambda x: 4 + (x - 250) * 0.16
-    band = " ".join(f"{x},{y - spread(x):.1f}" for x, y in fc) + " " + " ".join(
-        f"{x},{y + spread(x):.1f}" for x, y in reversed(fc)
-    )
-    for gy in (80, 120, 160, 200):
-        b += f'<line x1="30" y1="{gy}" x2="410" y2="{gy}" stroke="{t["line"]}" stroke-width=".7"/>'
-    b += (
-        f'<line x1="30" y1="86" x2="410" y2="86" stroke="{t["pink"]}" stroke-dasharray="3 4" opacity=".8"/>'
-        f'<text x="410" y="78" text-anchor="end" font-size="9" style="fill:{t["pink"]}">nitrate limit</text>'
-        f'<line x1="250" y1="62" x2="250" y2="206" stroke="{t["faint"]}" stroke-dasharray="2 3"/>'
-        f'<text x="246" y="72" text-anchor="end" font-size="9" class="mute">observed</text>'
-        f'<text x="255" y="72" font-size="9" style="fill:{c}">forecast</text>'
-        f'<polygon points="{band}" fill="{c}" opacity=".16"/>'
-        f'<polyline points="{obs}" fill="none" stroke="{t["ink"]}" stroke-width="1.8" stroke-linejoin="round"/>'
-        f'<polyline points="{" ".join(f"{x},{y:.1f}" for x, y in fc)}" fill="none" stroke="{c}" stroke-width="2" stroke-dasharray="5 4"/>'
-        f'<circle cx="250" cy="{f(250):.1f}" r="3.5" fill="{t["bg"]}" stroke="{c}" stroke-width="2"/>'
-    )
-    b += (
-        f'<g clip-path="url(#clip)"><path class="drift" d="{wave(236, 6, AW)} V{AH} H0 Z" fill="{c}" opacity=".14"/>'
-        f'<path class="drift slow" d="{wave(244, 5, AW)} V{AH} H0 Z" fill="{c}" opacity=".2"/></g>'
-    )
-    return svg(AW, AH, b, t, "Hydrosense: observed nitrate levels with a forecast and its uncertainty band")
-
-
-def art_parkinson(t):
-    c = t["violet"]
-    css = (
-        "@keyframes pulse{50%{transform:scaleY(.45)}}"
-        ".bar{transform-box:fill-box;transform-origin:center;animation:pulse 2.4s ease-in-out infinite}"
-    )
-    b = frame(AW, AH, t) + tag(24, 32, "02 RESEARCH · VOICE BIOMARKERS", t["faint"])
-    for i in range(26):
-        h = 14 + 52 * abs(math.sin(i * 0.55) * math.cos(i * 0.21 + 0.4))
-        b += (
-            f'<rect class="bar" style="animation-delay:{-i * 0.11:.2f}s" x="{30 + i * 7}" y="{138 - h / 2:.1f}" '
-            f'width="3.6" height="{h:.1f}" rx="1.8" fill="{c}" opacity="{0.45 + 0.55 * (i % 3) / 2:.2f}"/>'
-        )
-    b += (
-        f'<text x="30" y="204" font-size="10" class="mute">voice recording</text>'
-        f'<text x="30" y="219" font-size="10" class="mute">→ shimmer, pitch, jitter</text>'
-    )
-    x0, y0, s = 262, 62, 148
-    b += (
-        f'<rect x="{x0}" y="{y0}" width="{s}" height="{s}" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
-        f'<line x1="{x0}" y1="{y0 + s}" x2="{x0 + s}" y2="{y0}" stroke="{t["faint"]}" stroke-dasharray="3 4"/>'
-        f'<path d="M{x0},{y0 + s} C{x0 + 4},{y0 + 62} {x0 + 44},{y0 + 14} {x0 + s},{y0} V{y0 + s} Z" fill="{c}" opacity=".14"/>'
-        f'<path d="M{x0},{y0 + s} C{x0 + 4},{y0 + 62} {x0 + 44},{y0 + 14} {x0 + s},{y0}" fill="none" stroke="{c}" stroke-width="2.2"/>'
-        f'<text x="{x0 + s - 10}" y="{y0 + s - 30}" text-anchor="end" font-size="22" font-weight="700">0.88</text>'
-        f'<text x="{x0 + s - 10}" y="{y0 + s - 14}" text-anchor="end" font-size="9" class="mute">AUC · unseen cohort</text>'
-        f'<text x="{x0}" y="{y0 + s + 16}" font-size="9" class="faint">ROC curve</text>'
-    )
-    return svg(AW, AH, b, t, "Parkinson's voice model: ROC curve with 0.88 AUC on an unseen cohort", css)
-
-
-def art_stocks(t):
-    b = frame(AW, AH, t) + tag(24, 32, "03 WEB · PORTFOLIO RESEARCH", t["faint"])
-    rows = [("Hold every stock equally", 16.1, t["faint"]), ("AI portfolio", 14.5, t["amber"]), ("S&amp;P 500", 11.0, t["faint"])]
-    for i, (name, v, col) in enumerate(rows):
-        y, w = 74 + i * 46, v * 19.5
-        b += (
-            f'<text x="30" y="{y}" font-size="11" class="{"mute" if i != 1 else ""}" font-weight="{600 if i == 1 else 400}">{name}</text>'
-            f'<rect x="30" y="{y + 8}" width="{w:.0f}" height="16" rx="3" fill="{col}"/>'
-            f'<text x="{38 + w:.0f}" y="{y + 20}" font-size="12" font-weight="700">{v}%</text>'
-        )
-    b += (
-        f'<line x1="30" y1="206" x2="410" y2="206" stroke="{t["line"]}"/>'
-        f'<text x="30" y="225" font-size="10" class="mute">Return per year, 2006–2026, after costs.</text>'
-        f'<text x="30" y="241" font-size="10" class="mute">The no-skill baseline won, and the app says so.</text>'
-    )
-    return svg(AW, AH, b, t, "Stock research lab backtest: equal-weight 16.1%, AI portfolio 14.5%, S&amp;P 500 11.0% per year")
-
-
-def art_anchor(t):
-    c = t["blue"]
-    css = "@keyframes breathe{50%{opacity:.35}} .breathe{animation:breathe 3s ease-in-out infinite}"
-    b = frame(AW, AH, t) + tag(24, 32, "04 WEB · STUDY WORKSPACE", t["faint"])
-    b += (
-        f'<rect x="30" y="50" width="380" height="188" rx="9" fill="{t["bg2"]}" stroke="{t["line"]}"/>'
-        f'<line x1="30" y1="72" x2="410" y2="72" stroke="{t["line"]}"/>'
-        + "".join(f'<circle cx="{44 + i * 12}" cy="61" r="3" fill="{t["line"]}"/>' for i in range(3))
-        + f'<line x1="112" y1="72" x2="112" y2="238" stroke="{t["line"]}"/>'
-    )
-    for i, w in enumerate([44, 36, 50, 30, 42, 34]):
-        on = i == 0
-        b += f'<rect x="44" y="{88 + i * 22}" width="{w}" height="6" rx="3" fill="{c if on else t["line"]}"/>'
-    circ = 2 * math.pi * 34
-    b += (
-        f'<circle cx="176" cy="142" r="34" fill="none" stroke="{t["line"]}" stroke-width="7"/>'
-        f'<circle cx="176" cy="142" r="34" fill="none" stroke="{c}" stroke-width="7" stroke-linecap="round" '
-        f'stroke-dasharray="{circ * 0.78:.1f} {circ:.1f}" transform="rotate(-90 176 142)"/>'
-        f'<circle class="breathe" cx="176" cy="142" r="5" fill="{c}"/>'
-        f'<text x="176" y="198" text-anchor="middle" font-size="9" class="mute">wellness</text>'
-    )
-    for i, lab in enumerate(["posture", "gaze", "typing rhythm"]):
-        y = 96 + i * 30
-        b += (
-            f'<text x="240" y="{y}" font-size="9" class="mute">{lab}</text>'
-            f'<rect x="240" y="{y + 6}" width="150" height="5" rx="2.5" fill="{t["line"]}"/>'
-            f'<rect x="240" y="{y + 6}" width="{[112, 96, 128][i]}" height="5" rx="2.5" fill="{c}" opacity="{[1, .7, .85][i]}"/>'
-        )
-    b += (
-        f'<rect x="226" y="196" width="172" height="28" rx="14" fill="{c}"/>'
-        f'<circle cx="241" cy="210" r="4" fill="{t["bg2"]}"/>'
-        f'<text x="252" y="213.5" font-size="10" font-weight="600" style="fill:{t["bg2"]}">Time for a 30s check-in?</text>'
-    )
-    return svg(AW, AH, b, t, "Anchor: a study dashboard with a wellness ring, live signals and a check-in prompt", css)
-
-
-def art_neon(t):
-    # A game screen: stays dark in both themes.
-    cy, pk, yl = "#3df2ff", "#ff3fa4", "#ffe14d"
-    css = (
-        "@keyframes blink{50%{opacity:.25}} .coin{animation:blink 1.6s ease-in-out infinite}"
-        "@keyframes hover{50%{transform:translateY(-5px)}} .player{animation:hover 1.8s ease-in-out infinite}"
-    )
-    hz = 150
+def window(title, accent, inner, css, label):
+    css = f"text{{font-family:{MONO}}}" + css
     b = (
-        f'<defs><clipPath id="clip"><rect width="{AW}" height="{AH}" rx="12"/></clipPath>'
-        f'<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b0620"/><stop offset="1" stop-color="#2a0f4a"/></linearGradient>'
-        f'<linearGradient id="sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{yl}"/><stop offset="1" stop-color="{pk}"/></linearGradient>'
-        f'<filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/>'
-        f'<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>'
-        f'<g clip-path="url(#clip)"><rect width="{AW}" height="{AH}" fill="url(#sky)"/>'
-        f'<circle cx="220" cy="{hz - 8}" r="52" fill="url(#sun)"/>'
-        + "".join(f'<rect x="160" y="{hz - 40 + i * 9}" width="120" height="{1.5 + i * .6}" fill="#1c0a38"/>' for i in range(5))
-        + f'<rect y="{hz}" width="{AW}" height="{AH - hz}" fill="#0b0620"/>'
+        f'<defs><clipPath id="win"><rect width="{CW}" height="{CH}" rx="14"/></clipPath>'
+        f'<clipPath id="view"><rect y="{BAR}" width="{CW}" height="{VIEW}"/></clipPath></defs>'
+        f'<g clip-path="url(#win)"><rect width="{CW}" height="{CH}" fill="{WIN["bg"]}"/>'
+        f'<g clip-path="url(#view)">{inner}</g>'
+        f'<rect width="{CW}" height="{BAR}" fill="{WIN["bar"]}"/>'
+        f'<line y1="{BAR}" x2="{CW}" y2="{BAR}" stroke="{WIN["line"]}"/>'
+        + "".join(f'<circle cx="{24 + i * 20}" cy="20" r="6" fill="{c}"/>' for i, c in enumerate(["#ff5f57", "#febc2e", "#28c840"]))
+        + f'<text x="{CW / 2}" y="25" text-anchor="middle" font-size="14" fill="{WIN["ink"]}">{title}</text>'
+        f'<circle class="live" cx="{CW - 28}" cy="20" r="5" fill="{accent}"/></g>'
+        f'<rect x=".75" y=".75" width="{CW - 1.5}" height="{CH - 1.5}" rx="14" fill="none" stroke="{WIN["line"]}" stroke-width="1.5"/>'
     )
-    for i in range(-9, 10):
-        b += f'<line x1="{220 + i * 14}" y1="{hz}" x2="{220 + i * 90}" y2="{AH}" stroke="{pk}" stroke-width=".8" opacity=".55"/>'
-    y, step = hz, 5.0
-    while y < AH:
-        b += f'<line x1="0" y1="{y:.1f}" x2="{AW}" y2="{y:.1f}" stroke="{pk}" stroke-width=".8" opacity=".55"/>'
-        y += step
-        step *= 1.38
-    b += f'<line x1="0" y1="{hz}" x2="{AW}" y2="{hz}" stroke="{cy}" stroke-width="1.5" filter="url(#glow)"/>'
-    for i, (x, yy) in enumerate([(150, 196), (196, 188), (242, 196)]):
-        b += f'<circle class="coin" style="animation-delay:{-i * .4}s" cx="{x}" cy="{yy}" r="5" fill="{yl}" filter="url(#glow)"/>'
-    b += (
-        f'<rect class="player" x="88" y="198" width="22" height="22" rx="4" fill="none" stroke="{cy}" stroke-width="2.5" filter="url(#glow)"/>'
-        f'<path d="M318,222 l14,-26 l14,26 z" fill="none" stroke="{pk}" stroke-width="2.5" stroke-linejoin="round" filter="url(#glow)"/>'
-        f'<text x="220" y="76" text-anchor="middle" font-size="26" font-weight="800" letter-spacing="5" '
-        f'style="fill:{cy};font-family:{MONO}" filter="url(#glow)">NEON ESCAPE</text></g>'
-        f'<text x="24" y="32" class="mono" font-size="9" style="fill:#9a86c9">05 GAME · PYTHON</text>'
-        f'<text x="416" y="32" text-anchor="end" class="mono" font-size="9" style="fill:{yl}">LEVEL 1 / 3</text>'
-    )
-    return svg(AW, AH, b, t, "Neon Escape: a neon arcade scene with a player, coins and an enemy", css)
+    css += "@keyframes live{50%{opacity:.3}} .live{animation:live 1.6s ease-in-out infinite}"
+    return svg(CW, CH, b, css, label)
 
 
-ART = {
-    "hero": hero,
-    "hydrosense": art_hydrosense,
-    "parkinson": art_parkinson,
-    "stocks": art_stocks,
-    "anchor": art_anchor,
-    "neon": art_neon,
+def chip(cls, text, accent):
+    w = 30 + len(text) * 8.6
+    return (
+        f'<g class="{cls}"><rect x="20" y="{CH - 54}" width="{w:.0f}" height="34" rx="17" fill="#0d1117" '
+        f'fill-opacity=".86" stroke="{accent}" stroke-opacity=".7"/>'
+        f'<text x="{20 + w / 2:.0f}" y="{CH - 32}" text-anchor="middle" font-size="14" fill="#e6edf3">{text}</text></g>'
+    )
+
+
+def crossfade(title, accent, shots, label, seconds=7):
+    """Cycles through real screenshots with a slow push-in on each."""
+    n = len(shots)
+    total = n * seconds
+    on, fade = 100 / n, 6
+    css = (
+        # each shot fades in just before its slot and out just after, so one is always showing
+        f"@keyframes cut{{0%,{on:.2f}%{{opacity:1}}{on + fade:.2f}%,{100 - fade}%{{opacity:0}}100%{{opacity:1}}}}"
+        f"@keyframes push{{0%{{transform:scale(1)}}{on + fade:.2f}%,100%{{transform:scale(1.05)}}}}"
+        f".s{{opacity:0;animation:cut {total}s linear infinite}}"
+        f".s image{{transform-origin:440px 320px;animation:push {total}s linear infinite}}"
+        f"@keyframes bar{{from{{transform:scaleX(0)}}}}"
+        f".prog{{transform-origin:0 0;animation:bar {seconds}s linear infinite}}"
+        # with motion off, leave the first screenshot showing
+        "@media (prefers-reduced-motion:reduce){.s:first-of-type{opacity:1}}"
+    )
+    inner = ""
+    for i, (shot, caption) in enumerate(shots):
+        d = f"animation-delay:{i * seconds - total}s"
+        inner += (
+            f'<g class="s" style="{d}"><image style="{d}" href="{data_uri(shot)}" y="{BAR}" width="{CW}" height="{VIEW}"/>'
+            + chip("", caption, accent)
+            + "</g>"
+        )
+    inner += f'<rect class="prog" y="{CH - 4}" width="{CW}" height="4" fill="{accent}"/>'
+    return window(title, accent, inner, css, label)
+
+
+def pan(title, accent, shot, width, caption, label, seconds=22):
+    """Slides a wide figure sideways and back, pausing on each panel."""
+    travel = width - CW
+    css = (
+        f"@keyframes pan{{0%,10%{{transform:translateX(0)}}32%,42%{{transform:translateX(-{travel / 2:.0f}px)}}"
+        f"64%,78%{{transform:translateX(-{travel}px)}}100%{{transform:translateX(0)}}}}"
+        f".pan{{animation:pan {seconds}s ease-in-out infinite}}"
+    )
+    inner = (
+        f'<rect y="{BAR}" width="{CW}" height="{VIEW}" fill="#fff"/>'
+        f'<image class="pan" href="{data_uri(shot)}" y="{BAR}" width="{width}" height="{VIEW}"/>'
+        + chip("", caption, accent)
+    )
+    return window(title, accent, inner, css, label)
+
+
+CARDS = {
+    "parkinson": lambda: pan(
+        "Parkinson's voice model · cross-cohort results", "#a48bff", "parkinson-figure", 1453,
+        "figure from the repo", "Research figure: cross-cohort ROC-AUC, reliability and biomarker stability",
+    ),
+    "anchor": lambda: crossfade(
+        "Anchor · study + wellness workspace", "#22d3ee",
+        [("anchor-overview", "Overview"), ("anchor-burnout", "Burnout forecast")],
+        "Screenshots of the Anchor app: wellness overview and burnout forecast",
+    ),
+    "hydrosense": lambda: crossfade(
+        "Hydrosense · water-quality forecasting", "#3fd0c0",
+        [("hydrosense-national", "National dashboard"), ("hydrosense-live", "Live transport model")],
+        "Screenshots of Hydrosense: national station map and the live Alameda Creek transport model",
+    ),
+    "stocks": lambda: crossfade(
+        "AI Stock Research Lab", "#f2b248",
+        [("stocks-backtest", "Backtest vs benchmarks"), ("stocks-market", "Market view")],
+        "Screenshots of the stock research app: backtest results and market view",
+    ),
 }
 
 if __name__ == "__main__":
-    for name, fn in ART.items():
-        for theme, t in THEMES.items():
-            (OUT / f"{name}-{theme}.svg").write_text(fn(t))
-    print(f"wrote {len(ART) * len(THEMES)} files to {OUT}")
+    written = 0
+    for theme, t in THEMES.items():
+        (OUT / f"hero-{theme}.svg").write_text(hero(t))
+        written += 1
+    for name, make in CARDS.items():
+        try:
+            (OUT / f"{name}.svg").write_text(make())
+            written += 1
+        except FileNotFoundError as e:
+            print(f"skipped {name}: missing {e.filename}")
+    print(f"wrote {written} files to {OUT}")
