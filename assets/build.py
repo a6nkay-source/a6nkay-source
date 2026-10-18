@@ -50,6 +50,7 @@ def data_uri(name):
 # Lines the terminal strip types out, one after another.
 TYPED = [
     "med-tech: Parkinson's voice AI, 4 cohorts, 366 subjects",
+    "award: 1st overall, UCSC AI Hackathon @ SF Tech Week",
     "med-tech: SurgiVision, surgical video segmentation",
     "business: 74 stocks, 20-year walk-forward backtests",
     "stack: Python · PyTorch · LightGBM · TypeScript · Next.js",
@@ -213,7 +214,7 @@ VIEW = CH - BAR  # 560: the captures are 880×560
 WIN = dict(bg="#0d1117", bar="#161b22", line="#30363d", ink="#c9d1d9", mute="#7d8590")
 
 
-def window(title, accent, inner, css, label):
+def window(title, accent, inner, css, label, badge=None):
     css = f"text{{font-family:{MONO}}}" + css
     b = (
         f'<defs><clipPath id="win"><rect width="{CW}" height="{CH}" rx="14"/></clipPath>'
@@ -224,7 +225,9 @@ def window(title, accent, inner, css, label):
         f'<line y1="{BAR}" x2="{CW}" y2="{BAR}" stroke="{WIN["line"]}"/>'
         + "".join(f'<circle cx="{24 + i * 20}" cy="20" r="6" fill="{c}"/>' for i, c in enumerate(["#ff5f57", "#febc2e", "#28c840"]))
         + f'<text x="{CW / 2}" y="25" text-anchor="middle" font-size="14" fill="{WIN["ink"]}">{title}</text>'
-        f'<circle class="live" cx="{CW - 28}" cy="20" r="5" fill="{accent}"/></g>'
+        f'<circle class="live" cx="{CW - 28}" cy="20" r="5" fill="{accent}"/>'
+        + (award(badge) if badge else "")
+        + "</g>"
         f'<rect x=".75" y=".75" width="{CW - 1.5}" height="{CH - 1.5}" rx="14" fill="none" stroke="{WIN["line"]}" stroke-width="1.5"/>'
     )
     css += "@keyframes live{50%{opacity:.3}} .live{animation:live 1.6s ease-in-out infinite}"
@@ -240,7 +243,27 @@ def chip(cls, text, accent):
     )
 
 
-def crossfade(title, accent, shots, label, seconds=7):
+def award(text):
+    """A gold ribbon in the top-right corner of the screenshot area, with a slow shine."""
+    w = 46 + len(text) * 9.4
+    x, y = CW - w - 18, BAR + 16
+    return (
+        f'<defs><linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe08a"/>'
+        f'<stop offset="1" stop-color="#e0a52a"/></linearGradient>'
+        f'<linearGradient id="shine" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/>'
+        f'<stop offset=".5" stop-color="#fff" stop-opacity=".7"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+        f'<clipPath id="pill"><rect x="{x}" y="{y}" width="{w:.0f}" height="36" rx="18"/></clipPath>'
+        f'<style>@keyframes sweep{{0%,60%{{transform:translateX(-80px)}}100%{{transform:translateX({w + 80:.0f}px)}}}}'
+        f'.shine{{animation:sweep 4.5s ease-in-out infinite}}</style></defs>'
+        f'<rect x="{x}" y="{y + 3}" width="{w:.0f}" height="36" rx="18" fill="#000" opacity=".35"/>'
+        f'<rect x="{x}" y="{y}" width="{w:.0f}" height="36" rx="18" fill="url(#gold)"/>'
+        f'<g clip-path="url(#pill)"><rect class="shine" x="{x}" y="{y}" width="60" height="36" fill="url(#shine)"/></g>'
+        f'<text x="{x + 18}" y="{y + 24}" font-size="15" font-weight="700" fill="#3b2a05">★ {text}</text>'
+    )
+
+
+
+def crossfade(title, accent, shots, label, seconds=7, badge=None):
     """Cycles through real screenshots with a slow push-in on each."""
     n = len(shots)
     total = n * seconds
@@ -265,7 +288,7 @@ def crossfade(title, accent, shots, label, seconds=7):
             + "</g>"
         )
     inner += f'<rect class="prog" y="{CH - 4}" width="{CW}" height="4" fill="{accent}"/>'
-    return window(title, accent, inner, css, label)
+    return window(title, accent, inner, css, label, badge)
 
 
 def pan(title, accent, shot, width, caption, label, seconds=22):
@@ -285,6 +308,20 @@ def pan(title, accent, shot, width, caption, label, seconds=22):
 
 
 CARDS = {
+    "sightsense": lambda: crossfade(
+        "SightSense · smart guide cane", "#fbbf24",
+        [("sightsense-photos", "The cane at the hackathon"), ("sightsense-wheel", "3D model: the wheel end"),
+         ("sightsense-pi", "3D model: Pi and motor driver")],
+        "SightSense: photos of the guide cane at the hackathon and views of its 3D model",
+        seconds=6, badge="1st place overall",
+    ),
+    "drivemumbai": lambda: crossfade(
+        "Drive Mumbai · open-world driving", "#fb923c",
+        [("drivemumbai-marine-drive-night", "Marine Drive at night"), ("drivemumbai-gateway-sunset", "Gateway of India"),
+         ("drivemumbai-rickshaw-monsoon-autopilot", "Rickshaw on autopilot, monsoon")],
+        "Screenshots of Drive Mumbai: Marine Drive at night, the Gateway of India, and a rickshaw on autopilot in the rain",
+        seconds=6,
+    ),
     "surgivision": lambda: crossfade(
         "SurgiVision · surgical vision research", "#f87171",
         [("surgivision-pov", "Live segmentation on the demo clip"), ("surgivision-research", "Research workspace")],
