@@ -52,6 +52,7 @@ TYPED = [
     "med-tech: Parkinson's voice AI, 4 cohorts, 366 subjects",
     "award: 1st overall, UCSC AI Hackathon @ SF Tech Week",
     "med-tech: SurgiVision, surgical video segmentation",
+    "med-tech: OncoNova AI, lung-tumour CT research",
     "business: 74 stocks, 20-year walk-forward backtests",
     "stack: Python · PyTorch · LightGBM · TypeScript · Next.js",
 ]
@@ -326,6 +327,14 @@ CARDS = {
         "SurgiVision · surgical vision research", "#f87171",
         [("surgivision-pov", "Live segmentation on the demo clip"), ("surgivision-research", "Research workspace")],
         "Screenshots of SurgiVision: live segmentation of a synthetic laparoscopic clip, and the research workspace",
+    ),
+    "onconova": lambda: crossfade(
+        "OncoNova AI · lung CT research", "#4c9bff",
+        [("onconova-scan", "AI outline on a synthetic demo CT"), ("onconova-3d", "3-D view of the AI drawing"),
+         ("onconova-linac", "Simulated LINAC replay, dummy patient")],
+        "Screenshots of OncoNova AI: lesion outlines on a synthetic demo CT, the 3-D view, and a simulated "
+        "treatment-room replay on a dummy patient",
+        seconds=6,
     ),
     "parkinson": lambda: pan(
         "Parkinson's voice model · cross-cohort results", "#a48bff", "parkinson-figure", 1453,
